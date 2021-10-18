@@ -1,16 +1,23 @@
+#!/usr/bin/env bash
 if [ "${EUID}" -eq 0 ]; then
   dpkg --add-architecture i386
   apt update -y
   apt upgrade -y
-  apt install -y curl wget file tar bzip2 gzip unzip bsdmainutils python util-linux ca-certificates binutils bc jq tmux netcat lib32gcc1 lib32stdc++6 tmux screen libcurl4-gnutls-dev:i386
-  su - dstserver
+  apt install -y curl wget file tar bzip2 gzip unzip bsdmainutils python util-linux ca-certificates binutils bc jq tmux netcat lib32gcc1 lib32stdc++6 libsdl2-2.0-0:i386 steamcmd libcurl4-gnutls-dev:i386
+  apt autoremove -y
+  apt autoclean -y
+  # Create dstserver user, log in and maintain pwd
+  adduser dstserver
+  su dstserver  # -c "cd $(pwd); bash"
 else
-  if [ "$(whoami)" == "dstserver" ] && [ [ -f ~/cluster_token ] || [-f cluster_token] ]; then
-    # Download linuxgsm script
-    cd ~
+  DIR="$(dirname "$(realpath "$0")")"
+  if [ "$(whoami)" == "dstserver" ] && [ -f "${DIR}/cluster_token.txt" ]; then
+    # Download linuxgsm script in home folder of dstserver user
+    cd ~ || exit
     wget -O linuxgsm.sh https://linuxgsm.sh
     chmod +x linuxgsm.sh
 
+    # Create two server controllers
     ./linuxgsm.sh dstserver
     ./linuxgsm.sh dstserver
 
@@ -31,7 +38,7 @@ cave="true"' >> ~/lgsm/config-lgsm/dstserver/dstserver-2.cfg
 
     # Set cluster token
     mkdir -p ~/.klei/DoNotStarveTogether/Cluster_1/
-    cp cluster_token ~/.klei/DoNotStarveTogether/Cluster_1/cluster_token.txt
+    cp "${DIR}/cluster_token.txt" ~/.klei/DoNotStarveTogether/Cluster_1/cluster_token.txt
 
     # Install servers
     ./dstserver install
@@ -68,8 +75,8 @@ is_master = false
 [ACCOUNT]
 encode_user_path = true' > ~/.klei/DoNotStarveTogether/Cluster_1/Caves/server.ini
 
-    # Set shard_enabled = true
-    if [ ! grep "shard_enabled = true" ~/.klei/DoNotStarveTogether/Cluster_1/cluster.ini ]
+    # Set shard_enabled = true if set to false
+    if grep "shard_enabled = false" ~/.klei/DoNotStarveTogether/Cluster_1/cluster.ini &>/dev/null; then
       sed "s/shard_enabled = false/shard_enabled = true/g" -i ~/.klei/DoNotStarveTogether/Cluster_1/cluster.ini
     fi
 
@@ -344,17 +351,35 @@ encode_user_path = true' > ~/.klei/DoNotStarveTogether/Cluster_1/Caves/server.in
     enabled=true
   },
   ["workshop-856487758"]={ configuration_options={  }, enabled=true }
-}
-'
-
+}'
     echo "${modoverrides}" > ~/.klei/DoNotStarveTogether/Cluster_1/Caves/modoverrides.lua
     echo "${modoverrides}" > ~/.klei/DoNotStarveTogether/Cluster_1/Master/modoverrides.lua
+
+    # Change game mode from cluster.ini
+    if grep "game_mode = survival" ~/.klei/DoNotStarveTogether/Cluster_1/cluster.ini &>/dev/null; then
+      sed "s/game_mode = survival/game_mode = endless/g" -i ~/.klei/DoNotStarveTogether/Cluster_1/cluster.ini
+    fi
+
+    # Change description from cluster.ini
+    if grep "cluster_description = This server was created by LGSM!" ~/.klei/DoNotStarveTogether/Cluster_1/cluster.ini &>/dev/null; then
+      sed "s/cluster_description = This server was created by LGSM!/cluster_description = footClapFOOTClap/g" -i ~/.klei/DoNotStarveTogether/Cluster_1/cluster.ini
+    fi
+
+    # Change name from cluster.ini
+    if grep "cluster_name = LinuxGSM" ~/.klei/DoNotStarveTogether/Cluster_1/cluster.ini &>/dev/null; then
+      sed "s/cluster_name = LinuxGSM/cluster_name = peuClapPEUClap/g" -i ~/.klei/DoNotStarveTogether/Cluster_1/cluster.ini
+    fi
+
+    # Change password from cluster.ini
+    if grep "cluster_password =" ~/.klei/DoNotStarveTogether/Cluster_1/cluster.ini &>/dev/null; then
+      sed "s/cluster_password =/cluster_password = SSAP/g" -i ~/.klei/DoNotStarveTogether/Cluster_1/cluster.ini
+    fi
 
     # start servers
     ./dstserver start
     ./dstserver-2 start
   else
-    echo "You have to be dstserver user and have the cluster token on your homefolder"
+    echo "You have to be dstserver user and have the cluster token on the directory where rhe config-sh script is located"
     exit
   fi
 fi
