@@ -346,6 +346,7 @@ encode_user_path = true' > ~/.klei/DoNotStarveTogether/Cluster_1/Caves/server.in
   ["workshop-856487758"]={ configuration_options={  }, enabled=true }
 }
 '
+
     echo "${modoverrides}" > ~/.klei/DoNotStarveTogether/Cluster_1/Caves/modoverrides.lua
     echo "${modoverrides}" > ~/.klei/DoNotStarveTogether/Cluster_1/Master/modoverrides.lua
 
