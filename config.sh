@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 if [ "${EUID}" -eq 0 ]; then
-  deluser -r dstserver
+  userdel -r dstserver
   dpkg --add-architecture i386
   apt update -y
   apt upgrade -y
