@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 if [ "${EUID}" -eq 0 ]; then
+  deluser -r dstserver
   dpkg --add-architecture i386
   apt update -y
   apt upgrade -y
@@ -103,7 +104,7 @@ encode_user_path = true' > ~/.klei/DoNotStarveTogether/Cluster_1/Caves/server.in
 	ServerModSetup("352499675") -- DST easy resurrection shelter (permet reviure a un foc o bé construir el resurrection shelter per a reviure)
 	ServerModSetup("382177939") -- DST Storm Cellar (permet construir la estructura storm cellar que es com un chester gegant fireproof)
 	ServerModSetup("1242093526") -- Eternal glowcaps and mushlights
-	ServerModSetup("1818688368") -- Extra Equip Slots (Updated) (afegeix un slot mes de equipo de motxilla i de amuleto)
+	-- ServerModSetup("1818688368") -- Extra Equip Slots (Updated) (afegeix un slot mes de equipo de motxilla i de amuleto)
 	ServerModSetup("378160973") -- Global Positions (comparteix el mapa entre els jugadors i mostra la seva posicio a temps real al mapa)
 	ServerModSetup("585654889") -- Glowing Portal (Fa que el portal de resurrect brilli, util per quan suneix gent i es de nit, sino moren al instant)
 	ServerModSetup("374550642") -- Increased Stack size (permet stackejar els materials fins a 99)
@@ -421,9 +422,37 @@ encode_user_path = true' > ~/.klei/DoNotStarveTogether/Cluster_1/Caves/server.in
       sed "s/cluster_password =/cluster_password = SSAP/g" -i ~/.klei/DoNotStarveTogether/Cluster_1/cluster.ini
     fi
 
+
+    # World generation overrides
+    echo '
+return {
+  override_enabled=true,
+  overrides={
+
+  }
+}
+    ' > ~/.klei/DoNotStarveTogether/Cluster_1/Master/worldgenoverride.lua
+    # World generation overrides (caves)
+    echo '
+return {
+  preset="DST_CAVES",
+  override_enabled=true,
+  overrides={
+    world_size="huge",
+    boons="mostly",
+    start_location="plus",
+  }
+}
+    ' > ~/.klei/DoNotStarveTogether/Cluster_1/Caves/worldgenoverride.lua
+
+    # Load crontab to autoexecute servers on boot
+    echo '@reboot /home/dstserver/dstserver start 2>&1 | tee /home/dstserver/dstserver.log
+@reboot /home/dstserver/dstserver-2 start 2>&1 | tee /home/dstserver/dstserver-2.log' > crontab_file
+    crontab crontab_file
+
     # start servers
-    ./dstserver start
-    ./dstserver-2 start
+    # ./dstserver start
+    # ./dstserver-2 start
   else
     echo "You have to be dstserver user and have the cluster token on the directory where rhe config-sh script is located"
     exit
